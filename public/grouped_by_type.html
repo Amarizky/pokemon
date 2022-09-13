@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokemon</title>
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/icons/bootstrap-icons.css" rel="stylesheet">
+</head>
+
+<body style="overflow-y: scroll;">
+    <div class="navbar navbar-expand-lg bg-light">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" aria-current="page" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="/types">Grouped by Type</a>
+                    </li>
+                </ul>
+                <div class="row ms-auto">
+                    <div class="col-auto my-auto">
+                        <label for="sort">Sort:</label>
+                    </div>
+                    <div class="col-auto me-4">
+                        <select class="form-select" name="sort" id="sort">
+                            <option value="asc" selected>Ascending</option>
+                            <option value="desc">Descending</option>
+                        </select>
+                    </div>
+                </div>
+                <form class="row" action="#" method="get">
+                    <div class="col-auto my-auto">
+                        <label for="search">Search:</label>
+                    </div>
+                    <div class="col-auto">
+                        <input type="search" class="form-control me-2" id="search" name="search"
+                            placeholder="Search Pokemon Name">
+                        <button class="btn btn-outline-success visually-hidden" type="submit" id="btn-search">
+                            <i class="bi bi-search"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid mt-2">
+        <div class="row">
+            <div class="col-12">
+                <div class="btn-group w-100" role="group" id="radio-types"></div>
+            </div>
+        </div>
+        <div class="row" id="pokemon-cards"></div>
+
+        <div class="modal" id="details" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Pokemon Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="details-modal-body"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/jquery-3.6.1.min.js"></script>
+    <script>
+        const PokemonTypeButtons = ({ type }) => `
+                    <input type="radio" class="btn-check btn-types" name="types" id="btn-${type}" value="${type}" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="btn-${type}">${type}</label>`;
+        const PokemonCard = ({ id, name, img, types, abilities, moves, species }) => `
+            <div class="col-lg-3 my-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="row">
+                            <div class="col"><b>${name}</b></div>
+                            <div class="col text-end">
+                                <button class="btn btn-sm btn-secondary btn-details" data-id="${id}">Details</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body" style="height: 340px;">
+                        <div class="container-fluid p-0">
+                            <div class="row">
+                                <div class="col text-center">
+                                    <img src="${img}" class="img-thumbnail" width="140px" height="140px" alt="">
+                                </div>
+                            </div>
+                            <div class="row mt-4">
+                                <div class="col-4 text-end">Types</div>
+                                <div class="col">${types}</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4 text-end">Abilities</div>
+                                <div class="col">${abilities}</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4 text-end">Moves</div>
+                                <div class="col">${moves}</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4 text-end">Species</div>
+                                <div class="col">${species}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        const PokemonDetails = function ({ id, name, img, types, abilities, moves, species, weight, encounters, stats }) {
+            var detailsHTML = `
+                <div class="mb-3">
+                    <div class="text-center">
+                        <img src="${img}"
+                            class="img-thumbnail" width="200px" height="200px" alt="">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><b>Name</b></label>
+                    <ul class="list-group">
+                        <li class="list-group-item">${name}</li>
+                    </ul>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><b>Types</b></label>
+                    <ol class="list-group${types.length > 1 ? ' list-group-numbered' : ''}">`;
+            types.forEach(t => {
+                detailsHTML += `
+                        <li class="list-group-item">${t}</li>`
+            });
+            detailsHTML += `
+                    </ol>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><b>Species</b></label>
+                    <ul class="list-group">
+                        <li class="list-group-item">${species}</li>
+                    </ul>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><b>Weight</b></label>
+                    <ul class="list-group">
+                        <li class="list-group-item">${weight}</li>
+                    </ul>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><b>Base Stats</b></label>
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <div class="row">
+                                <div class="col">HP</div>
+                                <div class="col text-end">${stats.hp}/200</div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar"
+                                            style="width: ${stats.hp / 2}%;" aria-valuenow="${stats.hp}" aria-valuemin="0"
+                                            aria-valuemax="200"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            <div class="row">
+                                <div class="col">Attack</div>
+                                <div class="col text-end">${stats.attack}/200</div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-danger" role="progressbar"
+                                            style="width: ${stats.attack / 2}%;" aria-valuenow="${stats.attack}" aria-valuemin="0"
+                                            aria-valuemax="200"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            <div class="row">
+                                <div class="col">Defense</div>
+                                <div class="col text-end">${stats.defense}/200</div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-primary" role="progressbar"
+                                            style="width: ${stats.defense / 2}%;" aria-valuenow="${stats.defense}" aria-valuemin="0"
+                                            aria-valuemax="200"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            <div class="row">
+                                <div class="col">Special Attack</div>
+                                <div class="col text-end">${stats.special_attack}/200</div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-danger bg-opacity-50" role="progressbar"
+                                            style="width: ${stats.special_attack / 2}%;" aria-valuenow="${stats.special_attack}" aria-valuemin="0"
+                                            aria-valuemax="200"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            <div class="row">
+                                <div class="col">Special Defense</div>
+                                <div class="col text-end">${stats.special_defense}/200</div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-primary bg-opacity-50" role="progressbar"
+                                            style="width: ${stats.special_defense / 2}%;" aria-valuenow="${stats.special_defense}" aria-valuemin="0"
+                                            aria-valuemax="200"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            <div class="row">
+                                <div class="col">Speed</div>
+                                <div class="col text-end">${stats.speed}/200</div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" role="progressbar"
+                                            style="width: ${stats.speed / 2}%;" aria-valuenow="${stats.speed}" aria-valuemin="0"
+                                            aria-valuemax="200"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><b>Abilities</b></label>
+                    <ol class="list-group list-group-numbered" id="detail-types">`;
+            abilities.forEach(a => {
+                detailsHTML += `
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold">${a.name}</div>
+                                ${a.effect}
+                            </div>
+                        </li>`;
+            });
+            detailsHTML += `
+                    </ol>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><b>Moves</b></label>
+                    <button class="btn btn-primary w-100" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#move-list">
+                        Click here to toggle
+                    </button>
+                    <div class="collapse" id="move-list">
+                        <ol class="list-group${moves.length > 1 ? ' list-group-numbered' : ''}">`;
+            moves.forEach(m => {
+                detailsHTML += `
+                            <li class="list-group-item">${m}</li>`;
+            });
+            detailsHTML += `
+                        </ol>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><b>Encounters</b></label>`;
+            if (encounters.length > 0) {
+                detailsHTML += `
+                    <button class="btn btn-primary w-100" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#encounter-list">
+                        Click here to toggle
+                    </button>
+                    <div class="collapse" id="encounter-list">
+                        <ol class="list-group${encounters.length > 1 ? ' list-group-numbered' : ''}">`;
+                encounters.forEach(e => {
+                    detailsHTML += `
+                            <li class="list-group-item">${e}</li>`;
+                });
+            } else {
+                detailsHTML += `
+                    <ul class="list-group">
+                        <li class="list-group-item">Cannot be found in the wild</li>
+                    </ul>`
+            }
+            detailsHTML += `
+                        </ol>
+                    </div>
+                </div>`;
+
+            return detailsHTML;
+        }
+
+        // For when user stops typing, wait 600ms, then begin search
+        var searchTimer;
+        function search(instant = false) {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                $.ajax({
+                    'url': '/get_pokemon',
+                    'method': 'get',
+                    'data': {
+                        'sort': $('#sort').val(),
+                        'search': $('#search').val(),
+                    },
+                    'success': function (data) {
+                        let types_raw = [];
+                        data.forEach(d => d.types.forEach(t => types_raw.push(t)));
+                        types_raw.push('All');
+
+                        // Remove duplicates, sort, then push to filtered
+                        let filteredTypes = [];
+                        [...new Set(types_raw)].sort().forEach(t => filteredTypes.push({ type: t }));
+                        $('#radio-types').html(filteredTypes.map(PokemonTypeButtons));
+                        $('.btn-types')[0].click();
+                    }
+                });
+            }, instant ? 0 : 1000);
+        }
+
+        function refreshPokemon() {
+            $.ajax({
+                'url': '/get_pokemon',
+                'method': 'get',
+                'data': {
+                    'sort': $('#sort').val(),
+                    'search': $('#search').val(),
+                    'type': $('.btn-types:checked').val(),
+                },
+                'success': function (data) {
+                    if (data.length > 0) {
+                        let pokemon = [];
+                        data.forEach(d => {
+                            pokemon.push({
+                                'id': d.id,
+                                'name': d.name,
+                                'img': d.img,
+                                'types': d.types.join(', '),
+                                'abilities': d.abilities.slice(0, 2).map((a) => a.name).join(', ') + (d.abilities.length > 2 ? ', ...' : ''),
+                                'moves': d.moves.slice(0, 2).join(', ') + (d.moves.length > 2 ? ', ...' : ''),
+                                'species': d.species,
+                            });
+                        });
+                        $('#pokemon-cards').html(pokemon.map(PokemonCard));
+                    } else {
+                        $('#pokemon-cards').html(`
+                                <div class="col mt-2">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            Does not match any results! Try another search.
+                                        </div>
+                                    </div>
+                                </div>`);
+                    }
+                }
+            });
+        }
+
+        $(document).ready(function () {
+            search(true);
+
+            $('#search').on('keyup focusout', () => search());
+            $('#sort').change(() => search(true));
+            $('#btn-search').click(() => search(true));
+            $('form').submit((evt) => evt.preventDefault());
+
+            $(document).on('click', '.btn-details', async function () {
+                console.log($(this).data('id'));
+                await $.ajax({
+                    'url': '/get_pokemon',
+                    'method': 'get',
+                    'data': {
+                        'search': $(this).data('id'),
+                    },
+                    'success': function (data) {
+                        $('#details-modal-body').html(data.map(PokemonDetails));
+                    }
+                });
+                new bootstrap.Modal('#details').show();
+            });
+            $(document).on('click', '.btn-types', async function () {
+                refreshPokemon();
+            });
+        });
+    </script>
+</body>
+
+</html>
